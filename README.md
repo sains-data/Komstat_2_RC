@@ -2,11 +2,11 @@
 
 ## 👥 Team Members (Komstat_2_RC)
 
-| NIM       | Nama              | Email               | Deskripsi |
-|-----------|------------------|---------------------|-----------|
-| 123450040 | Aprilia Dewi Hutapea | aprilia.123450040@student.itera.ac.id | - |
-| 12xxxxxxxx | [Nama 2] | email@student.itera.ac.id | - |
-| 12xxxxxxxx | [Nama 3] | email@domain.com | - |
+| NIM       | Nama              | Email               |
+|-----------|------------------|---------------------|
+| 123450040 | Aprilia Dewi Hutapea | aprilia.123450040@student.itera.ac.id | 
+| 12xxxxxxxx | [Nama 2] | email@student.itera.ac.id | 
+| 12xxxxxxxx | [Nama 3] | email@domain.com | 
 
 ## 🏥 Business Domain
 Proyek ini mengevaluasi kapasitas layanan kesehatan dan mengukur risiko penyakit di wilayah Sumbagsel menggunakan teknik clustering berbasis K-Means Kelas S4.
