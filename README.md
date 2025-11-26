@@ -5,7 +5,7 @@
 | NIM       | Nama              | Email               |
 |-----------|------------------|---------------------|
 | 123450040 | Aprilia Dewi Hutapea | aprilia.123450040@student.itera.ac.id | 
-| 12xxxxxxxx | [Nama 2] | email@student.itera.ac.id | 
+| 123450037 | Labo Napitupulu | labo.123450037@student.itera.ac.id | 
 | 12xxxxxxxx | [Nama 3] | email@domain.com | 
 
 ## 🏥 Business Domain
