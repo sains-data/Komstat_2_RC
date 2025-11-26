@@ -26,24 +26,29 @@ Proyek ini menggabungkan epidemiologi, data mining, dan pemrograman R berbasis S
    
 ## 📝 Project Description
 Proyek ini mencakup:
+
 🔹 1. Pengolahan Data
 - Integrasi data penyakit menular (TBC, HIV, Kusta, Malaria, DBD)
 - Integrasi data fasilitas kesehatan (RS, Puskesmas, Klinik, Posyandu)
 - Standardisasi, normalisasi, dan imputasi missing value
 - Penyatuan dataset Lampung + Sumsel menjadi satu dataframe final
+
 🔹 2. Pengembangan Sistem S4
 - Pembuatan class S4 kmeansSumbagselS4
 - Slot: data, scaled data, k, centroid, labels, dll.
 - Definisi method: initialize, summary, plot, dan fungsi K-Means
 - Enkapsulasi data asli & hasil clustering dalam satu objek
+
 🔹 3. Analisis Clustering
 - Pemilihan variabel input: indikator beban penyakit
 - K-Means dengan k=3
 - Evaluasi pusat cluster & karakteristik risikonya
+
 🔹 4. Evaluasi Kapasitas Fasilitas
 - Analisis perbandingan “Risk vs Supply”
 - Gap analysis antar wilayah
 - Identifikasi mismatch antara kebutuhan & layanan
+
 🔹 5. Visualisasi
 - Histogram distribusi penyakit & fasilitas
 - Peta risiko (scatter Kusta vs DBD)
