@@ -29,7 +29,7 @@ Project ini berfokus pada:
 - R (S4 Class)
 - Google Colab
 - Canva (untuk infografis)
-- - Visualisasi: Qgis
+- Visualisasi: Qgis
 
 ## 📎 File Penting
 - Laporan akhir → laporan/
