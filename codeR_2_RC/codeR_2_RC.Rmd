@@ -1,0 +1,440 @@
+---
+title: "Untitled"
+output: html_document
+date: "2025-11-25"
+---
+
+# **BAGIAN 1: DATA WRANGLING**
+
+```{r}
+library(dplyr)    # Untuk 'bind_rows' dan 'mutate'
+library(tidyr)    # Untuk 'replace_na'
+library(ggplot2)  # Untuk fungsi plot S4
+```
+
+## **1. Pemanggilan data**
+
+```{r}
+url_penyakit_lampung <- "https://github.com/LaboNapitupulu/File/raw/refs/heads/main/KasusLampung2024.csv"
+url_penyakit_sumsel  <- "https://github.com/LaboNapitupulu/File/raw/refs/heads/main/KasusSumateraSelatan2024.csv"
+
+url_faskes_lampung   <- "https://github.com/LaboNapitupulu/File/raw/refs/heads/main/RS_Lampung.csv"
+url_faskes_sumsel    <- "https://github.com/LaboNapitupulu/File/raw/refs/heads/main/RS_Sumsel.csv"
+```
+
+## **2. Baca dan Gabungkan Data**
+
+### **A. Gabungkan Data Penyakit (Lampung + Sumsel)**
+
+```{r}
+raw_penyakit <- bind_rows(
+  read.csv(url_penyakit_lampung),
+  read.csv(url_penyakit_sumsel)
+)
+head(raw_penyakit)
+```
+
+### **B. Gabungkan Data Fasilitas (Lampung + Sumsel)**
+
+```{r}
+raw_faskes <- bind_rows(
+  read.csv(url_faskes_lampung),
+  read.csv(url_faskes_sumsel)
+)
+head(raw_faskes)
+```
+
+## **3. TRANSFORMASI DAN RENAME KOLOM**
+
+### **A. Data Penyakit (Rename agar lebih jelas & tambah suffix unit)**
+
+```{r}
+data_penyakit <- raw_penyakit %>%
+  rename(
+    KabupatenKota    = `Kabupaten.Kota`,
+    TBC              = `Jumlah.Kasus.Penyakit...Angka.Penemuan.TBC`,
+    PengobatanTBC    = `Jumlah.Kasus.Penyakit...Angka.Keberhasilan.Pengobatan.TBC`,
+    HIV              = `Jumlah.Kasus.Penyakit...HIV.AIDS.Kasus.Baru`,
+    Kusta_per_100000   = `Jumlah.Kasus.Penyakit...Penemuan.Kasus.Baru.Kusta.per.100.000.Penduduk`,
+    Malaria_per_100000 = `Jumlah.Kasus.Penyakit...Angka.Kesakitan.Malaria.per.1.000.Penduduk`,
+    DBD_per_100000     = `Jumlah.Kasus.Penyakit...Angka.Kesakitan.DBD.per.100.000.Penduduk`
+  )
+head(data_penyakit)
+```
+
+### **B. Data Fasilitas (Sederhanakan nama kolom yang panjang)**
+
+```{r}
+data_faskes <- raw_faskes %>%
+  rename(
+    KabupatenKota     = `Kabupaten.Kota`,
+    RS_Umum           = `Jumlah.Rumah.Sakit.Umum`,
+    RS_Khusus         = `Jumlah.Rumah.Sakit.Khusus`,
+    Puskesmas_Inap    = `Jumlah.Puskesmas.Rawat.Inap`,
+    Puskesmas_NonInap = `Jumlah.Puskesmas.Non.Rawat.Inap`,
+    Klinik            = `Jumlah.Klinik.Pratama`,
+    Posyandu          = `Jumlah.Posyandu`
+  )
+head(data_faskes)
+```
+
+## **4. INTEGRASI DATA (JOIN)**
+
+```{r}
+data_lengkap <- data_penyakit %>%
+  #gabungkan Penyakit & Fasilitas
+  left_join(data_faskes, by = "KabupatenKota") %>%
+
+  #imputasi
+  mutate(across(where(is.numeric), ~replace_na(., 0))) %>%
+
+  #hitung total
+  mutate(
+    Total_RS        = RS_Umum + RS_Khusus,
+    Total_Puskesmas = Puskesmas_Inap + Puskesmas_NonInap
+  )
+data_lengkap
+```
+
+## **5. INFORMASI DAN VISUALISASI DISTRIBUSI DATA**
+
+### A. Head Data
+
+```{r}
+tabel_sample <- data_lengkap %>%
+  select(KabupatenKota, TBC, HIV, Kusta_per_100000, DBD_per_100000, Total_RS, Total_Puskesmas) %>%
+  head(5)
+
+tabel_sample
+```
+
+### B. Statistika Deskriptrif
+
+```{r}
+# Pilih variabel kunci
+vars_stats <- data_lengkap %>%
+  select(TBC, HIV, Kusta_per_100000, DBD_per_100000, Total_RS, Total_Puskesmas)
+
+# Fungsi hitung statistik
+hitung_stat <- function(x) {
+  c(
+    Mean     = mean(x),
+    Median   = median(x),
+    Maximum  = max(x),
+    Std_Dev  = sd(x)
+  )
+}
+
+# Hitung dan rapikan tabel
+tabel_statistik <- sapply(vars_stats, hitung_stat) %>%
+  t() %>%                 # Transpose (putar posisi)
+  round(2) %>%            # Bulatkan 2 desimal
+  as.data.frame()
+
+tabel_statistik
+```
+
+### **C. HISTOGRAM DBD**
+
+```{r}
+mean_dbd <- mean(data_lengkap$DBD_per_100000, na.rm = TRUE)
+
+plot_dbd <- ggplot(data_lengkap, aes(x = DBD_per_100000)) +
+  geom_histogram(fill = "#FF7F00", color = "white", binwidth = 30, alpha = 0.8) +
+
+  # Garis Rata-rata
+  geom_vline(aes(xintercept = mean_dbd), color = "red", linetype = "dashed", size = 1) +
+
+  # Label Angka Rata-rata
+  annotate("text", x = mean_dbd + 40, y = 3,
+           label = paste("Rata-rata:\n", round(mean_dbd, 1)),
+           color = "red", fontface = "bold") +
+
+  labs(
+    title = "Distribusi Kasus DBD di Sumbagsel",
+    subtitle = "Garis Merah Menunjukkan Rata-rata Kasus",
+    x = "Kasus DBD per 100.000 Penduduk",
+    y = "Frekuensi"
+  ) +
+  theme_minimal()
+
+print(plot_dbd)
+```
+
+### **D. HISTOGRAM KUSTA**
+
+```{r}
+mean_kusta <- mean(data_lengkap$Kusta_per_100000, na.rm = TRUE)
+
+plot_kusta <- ggplot(data_lengkap, aes(x = Kusta_per_100000)) +
+  geom_histogram(fill = "#377EB8", color = "white", binwidth = 1, alpha = 0.8) +
+
+  # Garis Rata-rata
+  geom_vline(aes(xintercept = mean_kusta), color = "red", linetype = "dashed", size = 1) +
+
+  # Label Angka Rata-rata
+  annotate("text", x = mean_kusta + 1, y = 3,
+           label = paste("Rata-rata:\n", round(mean_kusta, 1)),
+           color = "red", fontface = "bold") +
+
+  labs(
+    title = "Distribusi Kasus Kusta di Sumbagsel",
+    subtitle = "Garis Merah Menunjukkan Rata-rata Kasus",
+    x = "Kasus Kusta per 100.000 Penduduk",
+    y = "Frekuensi"
+  ) +
+  theme_minimal()
+
+
+print(plot_kusta)
+```
+
+### **E. HISTOGRAM PUSKESMAS**
+
+```{r}
+mean_puskesmas <- mean(data_lengkap$Total_Puskesmas, na.rm = TRUE)
+
+plot_puskesmas <- ggplot(data_lengkap, aes(x = Total_Puskesmas)) +
+  geom_histogram(fill = "#4DAF4A", color = "white", binwidth = 2, alpha = 0.8) +
+
+  # Garis Rata-rata
+  geom_vline(aes(xintercept = mean_puskesmas), color = "red", linetype = "dashed", size = 1) +
+
+  # Label
+  annotate("text", x = mean_puskesmas + 5, y = 3,
+           label = paste("Rata-rata:\n", round(mean_puskesmas, 1)),
+           color = "red", fontface = "bold") +
+
+  labs(
+    title = "Distribusi Jumlah Puskesmas per Wilayah",
+    subtitle = "Sebaran Ketersediaan Fasilitas Kesehatan Primer",
+    x = "Jumlah Puskesmas (Unit)",
+    y = "Frekuensi"
+  ) +
+  theme_minimal()
+
+print(plot_puskesmas)
+```
+
+### **F. HISTOGRAM RUMAH SAKIT**
+
+```{r}
+mean_rs <- mean(data_lengkap$Total_RS, na.rm = TRUE)
+
+plot_rs <- ggplot(data_lengkap, aes(x = Total_RS)) +
+  geom_histogram(fill = "#984EA3", color = "white", binwidth = 1, alpha = 0.8) +
+
+  # Garis Rata-rata
+  geom_vline(aes(xintercept = mean_rs), color = "red", linetype = "dashed", size = 1) +
+
+  # Label
+  annotate("text", x = mean_rs + 3, y = 5,
+           label = paste("Rata-rata:\n", round(mean_rs, 1)),
+           color = "red", fontface = "bold") +
+
+  labs(
+    title = "Distribusi Jumlah Rumah Sakit per Wilayah",
+    subtitle = "Menunjukkan Pemusatan Fasilitas Rujukan di Wilayah Tertentu",
+    x = "Jumlah Rumah Sakit (Unit)",
+    y = "Frekuensi"
+  ) +
+  theme_minimal()
+
+print(plot_rs)
+```
+
+## **6. SELEKSI INPUT ALGORITMA K-MEANS**
+
+```{r}
+#Data Fasilitas tidak dimasukkan ke sini agar clustering murni berdasarkan beban penyakit.
+data_kmeans_input <- data_lengkap %>%
+  select(
+    TBC,
+    PengobatanTBC,
+    HIV,
+    Kusta_per_100000,
+    Malaria_per_100000,
+    DBD_per_100000
+  )
+data_kmeans_input
+```
+
+# **BAGIAN 2 : PENGEMBANGAN FUNGSI K-MEANS (S4)**
+
+## **1. Definisi Kelas S4**
+
+```{r}
+# Definisi Kelas S4 (Blueprint Objek)
+setClass("kmeansSumbagselS4",
+         slots = list(
+          # Menyimpan vektor label hasil pengelompokan (1, 2, atau 3)
+          clusters = "numeric",
+
+          # Menyimpan data frame lengkap (gabungan penyakit & fasilitas)
+          # Slot ini krusial untuk analisis Gap Analysis (Supply vs Demand)
+          data_asli = "data.frame",
+          # Menyimpan label nama wilayah (Kabupaten/Kota)
+          kab_kota = "character",
+          # Menyimpan matriks pusat klaster yang telah dinormalisasi
+          centroids_norm = "matrix"
+         )
+)
+```
+
+## **2. Fungsi K-Means**
+
+```{r}
+fungsi_kmeans <- function(data_input, k, max_iterasi = 100) {
+
+  #Pre-processing (Scaling)
+  data_ternormalisasi <- scale(data_input)
+
+  #Inisialisasi
+  indeks_awal <- sample(1:nrow(data_ternormalisasi), k)
+  centroids <- data_ternormalisasi[indeks_awal, ]
+  cluster_labels <- rep(0, nrow(data_ternormalisasi))
+
+  #Algoritma Iteratif
+  for (i in 1:max_iterasi) {
+
+    #a. Assignment (Hitung Jarak)
+    for (j in 1:nrow(data_ternormalisasi)) {
+      jarak <- rep(0, k)
+      for (c in 1:k) {
+        jarak[c] <- sum((data_ternormalisasi[j, ] - centroids[c, ])^2)
+      }
+      cluster_labels[j] <- which.min(jarak)
+    }
+
+    centroids_lama <- centroids
+
+    #b. Update Centroid
+    for (c in 1:k) {
+      titik_di_cluster <- data_ternormalisasi[cluster_labels == c, ]
+      if (is.matrix(titik_di_cluster) && nrow(titik_di_cluster) > 0) {
+        centroids[c, ] <- apply(titik_di_cluster, 2, mean)
+      } else if (is.vector(titik_di_cluster) && length(titik_di_cluster) > 0) {
+        centroids[c, ] <- titik_di_cluster
+      }
+    }
+
+    #c. Cek Konvergensi
+    if ( all(centroids == centroids_lama) ) {
+      cat(paste("Iterasi algoritma berhenti pada langkah ke-", i, "\n"))
+      break
+    }
+  }
+
+  #Return Objek S4
+  hasil_akhir_s4 <- new("kmeansSumbagselS4",
+                        clusters = cluster_labels,
+                        data_asli = data_lengkap,
+                        kab_kota = data_lengkap$KabupatenKota,
+                        centroids_norm = centroids
+  )
+
+  return(hasil_akhir_s4)
+}
+```
+
+# **BAGIAN 3: ANALISIS, FUNGSI GENERIK, & VISUALISASI (METHODS S4)**
+
+## **1. Method SUMMARY**
+
+```{r}
+setMethod("summary", "kmeansSumbagselS4",
+  function(object) {
+    cat("ANALISIS PROFIL RISIKO & KAPASITAS(S4)\n")
+
+    cat("\n[1] Ukuran Cluster (Demand):\n")
+    print(table(Cluster = object@clusters))
+
+    #Ambil data lengkap dari slot S4
+    data_full <- object@data_asli
+    data_full$Cluster <- object@clusters
+
+    cat("\n[2] Rata-rata Beban Penyakit (DEMAND):\n")
+    #Pilih kolom penyakit utama untuk ditampilkan
+    cols_penyakit <- c("TBC", "HIV", "Kusta_per_100000", "DBD_per_100000", "Cluster")
+    profil_penyakit <- aggregate(. ~ Cluster, data = data_full[, cols_penyakit], FUN = mean)
+    print(round(profil_penyakit, 2))
+
+    cat("\n[3] Rata-rata Ketersediaan Fasilitas (SUPPLY):\n")
+    #Pilih kolom fasilitas untuk evaluasi kapasitas
+    cols_faskes <- c("Total_RS", "Total_Puskesmas", "Klinik", "Posyandu", "Cluster")
+    profil_faskes <- aggregate(. ~ Cluster, data = data_full[, cols_faskes], FUN = mean)
+    print(round(profil_faskes, 2))
+  }
+)
+```
+
+## **2. Method PLOT**
+
+```{r}
+setMethod("plot", signature(x = "kmeansSumbagselS4", y = "missing"),
+  function(x) {
+
+    data_plot <- x@data_asli
+    data_plot$Cluster <- as.factor(x@clusters)
+    data_plot$KabupatenKota <- x@kab_kota
+
+    warna_kustom <- c("1" = "#4DAF4A", "2" = "#FF7F00", "3" = "#E41A1C")
+
+    p <- ggplot(data_plot, aes(x = Kusta_per_100000, y = DBD_per_100000, color = Cluster)) +
+      geom_point(size = 3, alpha = 0.8) +
+      geom_text(aes(label = KabupatenKota), vjust = -1, size = 2.5, check_overlap = TRUE) +
+
+      ggtitle("Peta Risiko: Kusta vs DBD (Lampung & Sumsel)") +
+      xlab("Kasus Kusta (per 100.000 Penduduk)") +
+      ylab("Kasus DBD (per 100.000 Penduduk)") +
+
+      theme_minimal() +
+      scale_color_manual(values = warna_kustom)
+
+    print(p)
+  }
+)
+```
+
+## **3. Summary**
+
+### A. Hasil Klasterisasi
+
+```{r}
+set.seed(123)
+#summary
+hasil_analisis <- fungsi_kmeans(data_kmeans_input, k = 3)
+summary(hasil_analisis)
+```
+
+### B. Anggota Klaster
+
+```{r}
+cat("DAFTAR ANGGOTA KLASTER :\n")
+
+nama_wilayah  <- hasil_analisis@kab_kota
+label_cluster <- hasil_analisis@clusters
+tabel_anggota <- data.frame(KabupatenKota = nama_wilayah, Cluster = label_cluster)
+
+for (i in 1:3) {
+  anggota <- sort(tabel_anggota$KabupatenKota[tabel_anggota$Cluster == i])
+
+  label_profil <- switch(i,
+    "1" = "WILAYAH PENYANGGA",
+    "2" = "KRISIS DBD",
+    "3" = "HOTSPOT TBC/HIV"
+  )
+
+  cat(paste0("\n\n--- CLUSTER ", i, ": ", label_profil, " ---\n"))
+
+  # Membuat tampilan tabel sederhana
+  print(data.frame(No = 1:length(anggota), Nama_Wilayah = anggota), row.names = FALSE)
+}
+```
+
+### C. Plot Klasterisasi
+
+```{r}
+#plot
+plot(hasil_analisis)
+```
