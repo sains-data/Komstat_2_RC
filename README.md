@@ -25,20 +25,11 @@ Project ini berfokus pada:
 - Visualisasi, dokumentasi, dan presentasi hasil
   
 ## 🧱 Architecture
-- Scikit-learn, Pandas, NumPy
-- Visualisasi: Matplotlib, Seaborn
 - Manajemen repo via GitHub
 - R (S4 Class)
-- Google Colab / Jupyter Notebook
-- PowerPoint
+- Google Colab
 - Canva (untuk infografis)
-
-## 📦 Cara Menjalankan Notebook
-1. Masuk ke folder code/
-2. Buka file .ipynb
-3. Jalankan di:
-   - Google Colab (direkomendasikan)
-   - Jupyter Notebook lokal
+- - Visualisasi: Qgis
 
 ## 📎 File Penting
 - Laporan akhir → laporan/
