@@ -36,7 +36,9 @@ Proses analisis meliputi:
 ## 📊 Hasil Utama
 **Cluster 1 – Risiko Moderat, Fasilitas Memadai (22 wilayah)**
 Mayoritas wilayah dengan kondisi stabil.
+
 **Cluster 2 – Zona Wabah DBD, Fasilitas Minim (7 wilayah)**
 DBD sangat tinggi, tetapi jumlah Puskesmas rendah → kesenjangan layanan.
+
 **Cluster 3 – Hotspot TBC & HIV, Fasilitas Melimpah (3 wilayah)**
 Terpusat di area urban (Palembang & sekitarnya).
